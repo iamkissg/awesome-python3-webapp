@@ -50,6 +50,7 @@ def select(sql, args, size=None):
         # 打开一个DictCursor,它与普通游标的不同在于,以dict形式返回结果
         cur = yield from conn.cursor(aiomysql.DictCursor)
         # sql语句的占位符为"?", mysql的占位符为"%s",因此需要进行替换
+        # 若没有指定args,将使用默认的select语句(在Metaclass内定义的)进行查询
         yield from cur.execute(sql.replace("?", "%s"), args or ())
         if size:
             rs = yield from cur.fetchmany(size)
@@ -75,50 +76,64 @@ def execute(sql, args):
             raise
         return affected
 
+# 构造占位符
 def create_args_string(num):
     L = []
     for n in range(num):
         L.append("?")
     return ', '.join(L)
 
+# 父域,可被其他域继承
 class Field(object):
 
-    # 域的初始化, 包括域名,列的类型,是否主键,默认值
-    # default参数允许orm自己填入缺省值
+    # 域的初始化, 包括属性(列)名,属性(列)的类型,是否主键
+    # default参数允许orm自己填入缺省值,因此具体的使用请看的具体的类怎么使用
+    # 比如User有一个定义在StringField的id,default就用于存储用户的独立id
+    # 再比如created_at的default就用于存储创建时间的浮点表示
     def __init__(self, name, column_type, primary_key, default):
         self.name = name
         self.column_type = column_type
         self.primary_key = primary_key
         self.default = default
 
+    # 用于打印信息,依次为类名(域名),属性类型,属性名
     def __str__(self):
         return "<%s, %s:%s>" % (self.__class__.__name__, self.column_type, self.name)
 
+# 字符串域
 class StringField(Field):
 
+    # ddl("data definition languages"),用于定义数据类型
+    # varchar("variable char"), 可变长度的字符串,以下定义中的100表示最长长度,即字符串的可变范围为0~100
+    # (char,为不可变长度字符串,会用空格字符补齐)
     def __init__(self, name=None, primary_key=False, default=None, ddl="varchar(100)"):
         super().__init__(name, ddl, primary_key, default)
 
+# 整数域
 class IntegerField(Field):
     
     def __init__(self, name=None, primary_key=False, default=0):
         super().__init__(name, "bigint", primary_key, default)
 
+# 布尔域
 class BooleanField(Field):
     
     def __init__(self, name=None, default=False):
         super().__init__(name, "boolean", False, default)
 
+# 浮点数域
 class FloatField(Field):
     
     def __init__(self, name=None, primary_key=False, default=0.0):
         super().__init__(name, "real", primary_key, default)
 
+# 文本域
 class TextField(Field):
     
     def __init__(self, name=None, default=None):
         super().__init__(name, "text", False, default)
 
+# 这是一个元类,它定义了如何来构造一个类,任何定义了__metaclass__属性或指定了metaclass的都会通过元类定义的构造方法构造类
 # 任何继承自Model的类,都会自动通过ModelMetaclass扫描映射关系,并存储到自身的类属性
 class ModelMetaclass(type):
     
@@ -142,6 +157,7 @@ class ModelMetaclass(type):
         primaryKey = None   # 用于保存主键
 
         # 遍历类的属性,找出定义的域(如StringField,字符串域)内的值,建立映射关系
+        # k是属性名,v其实是定义域!请看name=StringField(ddl="varchar50")
         for k, v in attrs.items():   
             if isinstance(v, Field):
                 logging.info(" found mapping: %s ==> %s" % (k, v))
@@ -163,14 +179,19 @@ class ModelMetaclass(type):
         attrs["__table__"] = tableName   # 保存表名
         attrs["__primary_key__"] = primaryKey # 保存主键
         attrs["__fields__"] = fields     # 保存非主键的属性名
-        # 构造默认的select, insert, update, delete语句
+
+        # 构造默认的select, insert, update, delete语句,使用?作为占位符
         attrs["__select__"] = "select `%s`, %s from `%s`" % (primaryKey, ', '.join(escaped_fields), tableName)
+        # 此处利用create_args_string生成的若干个?占位
+        # 插入数据时,要指定属性名,并对应的填入属性值(数据库的知识都要忘光了,我这句怎么难看懂- -,惭愧惭愧)
         attrs["__insert__"] = "insert into `%s` (%s, `%s`) values (%s)" % (tableName, ', '.join(escaped_fields), primaryKey, create_args_string(len(escaped_fields) + 1 ))
+        # 通过主键查找到记录并更新
         attrs["__update__"] = "update `%s` set %s where `%s`=?" % (tableName, ', '.join(map(lambda f: "`%s`" % (mappings.get(f).name or f), fields)), primaryKey)
+        # 通过主键删除
         attrs["__delete__"] = "delete from `%s` where `%s`=?" % (tableName, primaryKey)
         return type.__new__(cls, name, bases, attrs)
 
-# ORM映射基类,继承自dict,
+# ORM映射基类,继承自dict,通过ModelMetaclass元类来构造类
 class Model(dict, metaclass=ModelMetaclass):
     
     # 初始化函数,调用其父类(dict)的方法
@@ -193,39 +214,52 @@ class Model(dict, metaclass=ModelMetaclass):
         return getattr(self, key, None)
 
     # 通过键取值,若值不存在,则返回默认值
+    # 这个函数很好玩!
     def getValueOrDefault(self, key):
         value = getattr(self, key, None)
         if value is None:
-            # 不存在与键相对应的值,从映射关系中
-            field = self.__mappings__[key]
+            field = self.__mappings__[key] # field是一个定义域!比如FloatField
+            # default这个属性在此处再次发挥作用了!
             if field.default is not None:
+                # 看例子你就懂了
+                # id的StringField.default=next_id,因此调用该函数生成独立id
+                # FloatFiled.default=time.time数,因此调用time.time函数返回当前时间
+                # 普通属性的StringField默认为None,因此还是返回None
                 value = field.default() if callable(field.default) else field.default
                 logging.debug("using default value for %s: %s" % (key, str(value)))
+                # 通过default取到值之后再将其作为当前值
                 setattr(self, key, value)
         return value
 
-    @classmethod
+    @classmethod    # 该装饰器将方法定义为类方法
     @asyncio.coroutine
     def find(cls, pk):
         'find object by primary key'
+        # 我们之前已将将数据库的select操作封装在了select函数中,以下select的参数依次就是sql, args, size
         rs = yield from select("%s where `%s`=?" % (cls.__select__, cls.primary_key), [pk], 1)
         if len(rs) == 0:
             return None
+        # **表示关键字参数,我当时还疑惑怎么用到了指针?知识交叉了- -
+        # 注意,我们在select函数中,打开的是DictCursor,它会以dict的形式返回结果
         return cls(**rs[0])
 
     @classmethod
     @asyncio.coroutine
     def findAll(cls, where=None, args=None, **kw):
         sql = [cls.__select__]
+        # 我们定义的默认的select语句是通过主键查询的,并不包括where子句
+        # 因此若指定有where,需要在select语句中追加关键字
         if where:
             sql.append("where")
             sql.append(where)
         if args is None:
             args = []
         orderBy = kw.get("orderBy", None)
+        # 解释同where, 此处orderBy通过关键字参数传入
         if orderBy:
             sql.append("order by")
             sql.append(orderBy)
+        # 解释同where
         limit = kw.get("limit", None)
         if limit is not None:
             sql.append("limit")
@@ -237,7 +271,7 @@ class Model(dict, metaclass=ModelMetaclass):
                 args.extend(limit)
             else:
                 raise ValueError("Invalid limit value: %s" % str(limit))
-        rs = yield from select(' '.join(sql), args)
+        rs = yield from select(' '.join(sql), args) #没有指定size,因此会fetchall
         return [cls(**r) for r in rs]
 
     @classmethod
@@ -255,16 +289,18 @@ class Model(dict, metaclass=ModelMetaclass):
 
     @asyncio.coroutine
     def save(self):
-        args = list(map(self.getValueOrDefault, self.__fields__))
+        # 我们在定义__insert__时,将主键放在了末尾.因为属性与值要一一对应,因此通过append的方式将主键加在最后
+        args = list(map(self.getValueOrDefault, self.__fields__)) #使用getValueOrDefault方法,可以调用time.time这样的函数来获取值
         args.append(self.getValueOrDefault(self.__primary_key__))
         rows = yield from execute(self.__insert__, args)
-        if rows != 1:
+        if rows != 1: #插入一条记录,结果影响的条数不等于1,肯定出错了
             logging.warn("failed to insert recored: affected rows: %s" % rows)
 
 
     @asyncio.coroutine
     def update(self):
-        args = list(map(self.getValue, self.__fields__)) #取所有非主键的值
+        # 像time.time,next_id之类的函数在插入的时候已经调用过了,没有其他需要实时更新的值,因此调用getValue
+        args = list(map(self.getValue, self.__fields__)) 
         args.append(self.getValue(self.__primary_key__))
         rows = yield from execute(self.__update__, args)
         if rows != 1:

@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-''
+'ORM,建立类与数据库表的映射.'
+
 
 __author__ = 'Engine' 
 
 import logging
 import asyncio
 import aiomysql
+
+# ORM就是通过打开数据库连接,再由连接创建游标,通过游标执行一系列操作
+# 将符合数据库表的格式的数据插入,或更新或其他操作,而实现类与数据库的映射的.
+
+
 
 def log(sql, args=()):
     logging.info("SQL: %s" % sql)

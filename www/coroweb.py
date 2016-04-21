@@ -195,59 +195,58 @@ class RequestHandler(object):
         except APIError as e:
             return dict(error = e.error, data = e.data, message = e.message)
     
-    def add_static(app):
-        # os.path.abspath(__file__), 返回当前脚本的绝对路径(包括文件名)
-        # os.path.dirname(), 去掉文件名,返回目录路径
-        # os.path.join(), 将分离的各部分组合成一个路径名
-        # 因此以下操作就是将本文件同目录下的static目录(即www/static/)加入到应用的路由管理器中
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
-        app.router.add_static("/static/", path)
-        logging.info("add static %s => %s" % ("/static/", path))
+def add_static(app):
+    # os.path.abspath(__file__), 返回当前脚本的绝对路径(包括文件名)
+    # os.path.dirname(), 去掉文件名,返回目录路径
+    # os.path.join(), 将分离的各部分组合成一个路径名
+    # 因此以下操作就是将本文件同目录下的static目录(即www/static/)加入到应用的路由管理器中
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+    app.router.add_static("/static/", path)
+    logging.info("add static %s => %s" % ("/static/", path))
 
-    # 将处理函数注册到app上
-    # 处理将针对http method 和path进行
-    def add_route(app, fn):
-        method = getattr(fn, "__method__", None) # 获取fn.__method__属性,若不存在将返回None
-        path = getattr(fn, "__route__", None) # 同上
-        # http method 或 path 路径未知,将无法进行处理,因此报错 
-        if path is None or method is None:
-            raise ValueError("@get or @post not defined in %s." % str(fn))
-        # 将非协程或生成器的函数变为一个协程.
-        if not asyncio.iscoroutinefunction(fn) and not inspect.isgeneratorfunction(fn):
-            fn = asyncio.coroutine(fn)
-        logging.info("add route %s %s => %s(%s)" % (method, path, fn.__name__, '. '.join(inspect.signature(fn).parameters.keys())))
-        # 注册request handler
-        app.router.add_route(method, path, RequestHandler(app, fn))
+# 将处理函数注册到app上
+# 处理将针对http method 和path进行
+def add_route(app, fn):
+    method = getattr(fn, "__method__", None) # 获取fn.__method__属性,若不存在将返回None
+    path = getattr(fn, "__route__", None) # 同上
+    # http method 或 path 路径未知,将无法进行处理,因此报错 
+    if path is None or method is None:
+        raise ValueError("@get or @post not defined in %s." % str(fn))
+    # 将非协程或生成器的函数变为一个协程.
+    if not asyncio.iscoroutinefunction(fn) and not inspect.isgeneratorfunction(fn):
+        fn = asyncio.coroutine(fn)
+    logging.info("add route %s %s => %s(%s)" % (method, path, fn.__name__, '. '.join(inspect.signature(fn).parameters.keys())))
+    # 注册request handler
+    app.router.add_route(method, path, RequestHandler(app, fn))
 
-    # 自动注册所有请求处理函数
-    def add_routes(app, module_name):
-        n = module_name.rfind(".") # n 记录模块名中最后一个.的位置
-        if n == (-1): # -1 表示未找到,即module_name表示的模块直接导入
-            # __import__()的作用同import语句,python官网说强烈不建议这么做
-            # __import__(name, globals=None, locals=None, fromlist=(), level=0)
-            # name -- 模块名
-            # globals, locals -- determine how to interpret the name in package context
-            # fromlist -- name表示的模块的子模块或对象名列表
-            # level -- 绝对导入还是相对导入,默认值为0, 即使用绝对导入,正数值表示相对导入时,导入目录的父目录的层数
-            mod = __import__(module_name, globals(), locals())
-        else:
-            name = module_name[n+1:] # 
-            # 以下语句表示, 先用__import__表达式导入模块以及子模块
-            # 再通过getattr()方法取得子模块名, 如datetime.datetime
-            mod = getattr(__import__(module_name[:n], globals(), locals(), [name]), name)
-        # 遍历模块目录
-        for attr in dir(mod):
-            # 忽略以_开头的属性与方法,_xx或__xx(前导1/2个下划线)指示方法或属性为私有的,__xx__指示为特殊变量
-            # 私有的,能引用(python并不存在真正私有),但不应引用;特殊的,可以直接应用,但一般有特殊用途
-            if attr.startswith("_"):
-                continue
-            fn = getattr(mod, attr) # 获得模块的属性或方法, 如datetime.datetime.now # 前一个datetime表示模块名,后一个表示子模块名,如果是以上述else方法导入的模块,就应为datetime.datetime形式
-            if callable(fn):
-                # 获取fn的__method__属性与__route__属性获得http method与path信息
-                # 此脚本开头的@get与@post装饰器就为fn加上了__method__与__route__
-                method = getattr(fn, "__method__", None)
-                path = getattr(fn, "__route__",None)
-                # 注册request handler, 与add.router.add_route(method, path, handler)一样的
-                if method and path:
-                    add_route(app, fn)
-
+# 自动注册所有请求处理函数
+def add_routes(app, module_name):
+    n = module_name.rfind(".") # n 记录模块名中最后一个.的位置
+    if n == (-1): # -1 表示未找到,即module_name表示的模块直接导入
+        # __import__()的作用同import语句,python官网说强烈不建议这么做
+        # __import__(name, globals=None, locals=None, fromlist=(), level=0)
+        # name -- 模块名
+        # globals, locals -- determine how to interpret the name in package context
+        # fromlist -- name表示的模块的子模块或对象名列表
+        # level -- 绝对导入还是相对导入,默认值为0, 即使用绝对导入,正数值表示相对导入时,导入目录的父目录的层数
+        mod = __import__(module_name, globals(), locals())
+    else:
+        name = module_name[n+1:] # 
+        # 以下语句表示, 先用__import__表达式导入模块以及子模块
+        # 再通过getattr()方法取得子模块名, 如datetime.datetime
+        mod = getattr(__import__(module_name[:n], globals(), locals(), [name]), name)
+    # 遍历模块目录
+    for attr in dir(mod):
+        # 忽略以_开头的属性与方法,_xx或__xx(前导1/2个下划线)指示方法或属性为私有的,__xx__指示为特殊变量
+        # 私有的,能引用(python并不存在真正私有),但不应引用;特殊的,可以直接应用,但一般有特殊用途
+        if attr.startswith("_"):
+            continue
+        fn = getattr(mod, attr) # 获得模块的属性或方法, 如datetime.datetime.now # 前一个datetime表示模块名,后一个表示子模块名,如果是以上述else方法导入的模块,就应为datetime.datetime形式
+        if callable(fn):
+            # 获取fn的__method__属性与__route__属性获得http method与path信息
+            # 此脚本开头的@get与@post装饰器就为fn加上了__method__与__route__
+            method = getattr(fn, "__method__", None)
+            path = getattr(fn, "__route__",None)
+            # 注册request handler, 与add.router.add_route(method, path, handler)一样的
+            if method and path:
+                add_route(app, fn)

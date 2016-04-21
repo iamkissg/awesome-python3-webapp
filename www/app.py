@@ -8,7 +8,7 @@ __author__ = 'Engine'
 import logging
 
 # 设置日志等级,默认为WARNING.只有指定级别或更高级的才会被追踪记录
-logging.basicConfig("logfile", level=logging.INFO) # 输出到logfile文件
+logging.basicConfig(level=logging.INFO) # 输出到logfile文件
 
 import asyncio
 import os
@@ -21,6 +21,7 @@ from jinja2 import Environment, FileSystemLoader # 从jinja2模板库导入环�
 
 import orm
 from coroweb import add_routes, add_static
+import handlers
 
 
 # 选择jinja2作为模板, 初始化模板
@@ -96,7 +97,7 @@ def data_factory(app, handler):
 # 上面2个middle factory是在url处理函数之前先对请求进行了处理,以下则在url处理函数之后进行处理
 # 其将request handler的返回值转换为web.Response对象
 @asyncio.coroutine
-def repsponse_factory(app, handler):
+def response_factory(app, handler):
     @asyncio.coroutine
     def response(request):
         logging.info("Response handler...")
@@ -126,7 +127,7 @@ def repsponse_factory(app, handler):
             template = r.get("__template__") 
             # 若不存在对应模板,则将字典调整为json格式返回,并设置响应类型为json 
             if template is None:
-                resp = web.Response(body=json.dump(r, ensure_ascii=False, default=lambda o: o.__dict__).encode("utf-8"))
+                resp = web.Response(body=json.dumps(r, ensure_ascii=False, default=lambda o: o.__dict__).encode("utf-8"))
                 resp.content_type = "application/json;charset=utf-8"
                 return resp
             # 存在对应模板的,则将套用模板,用request handler的结果进行渲染
@@ -172,7 +173,7 @@ def datetime_filter(t):
 @asyncio.coroutine
 def init(loop):
     # 创建全局数据库连接池
-    yield from orm.create_pool(loop = loop, host="127.0.0.1", port = 3306, user = "www", password = "www", db = "awesome")
+    yield from orm.create_pool(loop = loop, host="127.0.0.1", port = 3306, user = "www-data", password = "www-data", db = "awesome")
     # 创建web应用,
     app = web.Application(loop = loop, middlewares=[logger_factory, response_factory]) # 创建一个循环类型是消息循环的web应用对象
     # 设置模板为jiaja2, 并以时间为过滤器

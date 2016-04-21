@@ -28,11 +28,12 @@ def create_pool(loop, **kw):
     # 调用一个子协程来创建全局连接池,create_pool的返回值是一个pool实例对象
     __pool = yield from aiomysql.create_pool(
             # 前面几项为设置连接的属性
+            # dict.get(key, default)
             host      = kw.get("host", "localhost"),# 数据库服务器的位置,设在本地
             port      = kw.get("port", 3306),      # mysql的端口
             user      = kw["user"],                # 登录用户名
             password  = kw["password"],            # 口令
-            db        = kw["database"],            # 当前数据库名
+            db        = kw["db"],            # 当前数据库名
             charset   = kw.get("charset", "utf8"), # 设置连接使用的编码格式为utf-8
             autocommit= kw.get("autocommit", True),# 自动提交模式,默认是False
             

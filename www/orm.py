@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-'ORM,建立类与数据库表的映射.'
+"""ORM,建立类与数据库表的映射
+ORM通过打开数据库连接,再由连接创建游标,通过游标执行一系列操作
+将符合数据库表的格式的数据插入,或更新或其他操作,而实现类与数据库的映射的."""
 
 
 __author__ = 'Engine' 
@@ -10,11 +12,9 @@ import logging
 import asyncio
 import aiomysql
 
-# ORM就是通过打开数据库连接,再由连接创建游标,通过游标执行一系列操作
-# 将符合数据库表的格式的数据插入,或更新或其他操作,而实现类与数据库的映射的.
 
 
-
+# 打印sql日志
 def log(sql, args=()):
     logging.info("SQL: %s" % sql)
 
@@ -58,11 +58,11 @@ def select(sql, args, size=None):
         # sql语句的占位符为"?", mysql的占位符为"%s",因此需要进行替换
         # 若没有指定args,将使用默认的select语句(在Metaclass内定义的)进行查询
         yield from cur.execute(sql.replace("?", "%s"), args or ())
-        if size:
+        if size: # 若指定了size, 则打印相应数量的查询信息
             rs = yield from cur.fetchmany(size)
-        else:
+        else: # 未指定size, 打印全部的查询信息
             rs = yield from cur.fetchall()
-        yield from cur.close()
+        yield from cur.close() # 关闭游标
         logging.info("rows return %s" % len(rs))
         return rs
 
@@ -71,14 +71,20 @@ def select(sql, args, size=None):
 @asyncio.coroutine
 def execute(sql, args):
     log(sql)
-    with (yield from __pool) as conn:
+    with (yield from __pool) as conn: # 从连接池中取出一条数据库连接
+        if not autocommit: # 若数据库的事务为非自动提交的,则调用协程启动连接
+            yield from conn.begin()
         try:
             # 此处打开的是一个普通游标
             cur = yield from conn.cursor()
-            yield from cur.execute(sql.replace("?", "%s"), args)
-            affected = cur.rowcount # 增删改,返回影响的行数
-            yield from cur.close()
+            yield from cur.execute(sql.replace("?", "%s"), args) # 执行增删改
+            affected = cur.rowcount # 增删改影响的行数
+            yield from cur.close() # 执行结束,关闭游标
+            if not autocommit: # 同上, 事务非自动提交型的,手动调用协程提交增删改事务
+                yield from conn.commit()
         except BaseException as e:
+            if not autocommit: # 出错, 回滚事务到增删改之前
+                yield from conn.rollback()
             raise
         return affected
 
@@ -237,7 +243,9 @@ class Model(dict, metaclass=ModelMetaclass):
                 setattr(self, key, value)
         return value
 
-    @classmethod    # 该装饰器将方法定义为类方法
+    # classmethod装饰器将方法定义为类方法
+    # 对于查询相关的操作,我们都定义为类方法,就可以方便查询,而不必先创建实例再查询
+    @classmethod
     @asyncio.coroutine
     def find(cls, pk):
         'find object by primary key'

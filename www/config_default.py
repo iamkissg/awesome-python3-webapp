@@ -13,7 +13,7 @@ configs = {
         "password": "www-data",
         "database": "awesome"
         },
-    "session": { # 
+    "session": { # 定义会话信息
         "secret": "AwEsOmE"
         } 
     }

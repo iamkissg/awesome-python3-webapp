@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-'json api definition'
+'Json API definition'
 
 __author__ = 'Engine' 
 
 import json
 import logging
-import inspect
-import functools
+import inspect # the module provides several useful functions to help get information about live objects, such as modules, classes, methods, functions.
+import functools # 该模块提供有用的高阶函数.总的来说,任何callable对象都可视为函数
 
 
 class APIError(Exception):
@@ -43,7 +43,7 @@ class APIResourceNotFoundError(APIError):
 class APIPermissionError(APIError):
     '''
     定义APIPermissionError类
-    表明api没有权限
+    表明没有权限
     '''
     def __init__(self, message=""):
         super(APIPermissionError, self).__init__("permission:forbidden", "permission", message)

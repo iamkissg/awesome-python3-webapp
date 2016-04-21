@@ -6,10 +6,10 @@
 __author__ = 'Engine' 
 
 import time
-import uuid
+import uuid # the module provides immutable uuid objects, and the functions to generating different versions uuid.
 from orm import Model, StringField, BooleanField, FloatField, TextField
 
-# 用当前时间与随机生成的uuid作为id
+# 用当前时间与随机生成的uuid合成作为id
 def next_id():
     # uuid4()以随机方式生成uuid,hex属性将uuid转为32位的16进制数
     return "%015d%s000" % (int(time.time() * 1000), uuid.uuid4().hex)

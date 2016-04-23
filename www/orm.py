@@ -6,7 +6,7 @@ ORM通过打开数据库连接,再由连接创建游标,通过游标执行一系
 将符合数据库表的格式的数据插入,或更新或其他操作,而实现类与数据库的映射的."""
 
 
-__author__ = 'Engine' 
+__author__ = 'Engine'
 
 import logging
 import asyncio
@@ -27,23 +27,23 @@ def create_pool(loop, **kw):
     global __pool
     # 调用一个子协程来创建全局连接池,create_pool的返回值是一个pool实例对象
     __pool = yield from aiomysql.create_pool(
-            # 前面几项为设置连接的属性
-            # dict.get(key, default)
-            host      = kw.get("host", "localhost"),# 数据库服务器的位置,设在本地
-            port      = kw.get("port", 3306),      # mysql的端口
-            user      = kw["user"],                # 登录用户名
-            password  = kw["password"],            # 口令
-            db        = kw["db"],            # 当前数据库名
-            charset   = kw.get("charset", "utf8"), # 设置连接使用的编码格式为utf-8
-            autocommit= kw.get("autocommit", True),# 自动提交模式,默认是False
-            
-            #以下三项为可选项
-            # 最大连接池大小,默认是10,此处设为10
-            maxsize   = kw.get("maxsize", 10),
-            # 最小连接池大小,默认是10,此处设为1,保证了任何时候都有一个数据库连接
-            minsize   = kw.get("minsize", 1), 
-            loop      = loop # 设置消息循环,何用?
-            )
+        # 前面几项为设置连接的属性
+        # dict.get(key, default)
+        host      = kw.get("host", "localhost"),# 数据库服务器的位置,设在本地
+        port      = kw.get("port", 3306),      # mysql的端口
+        user      = kw["user"],                # 登录用户名
+        password  = kw["password"],            # 口令
+        db        = kw["db"],            # 当前数据库名
+        charset   = kw.get("charset", "utf8"), # 设置连接使用的编码格式为utf-8
+        autocommit= kw.get("autocommit", True),# 自动提交模式,默认是False
+
+        #以下三项为可选项
+        # 最大连接池大小,默认是10,此处设为10
+        maxsize   = kw.get("maxsize", 10),
+        # 最小连接池大小,默认是10,此处设为1,保证了任何时候都有一个数据库连接
+        minsize   = kw.get("minsize", 1),
+        loop      = loop # 设置消息循环,何用?
+    )
 
 # 将数据库的select操作封装在select函数中
 # sql形参即为sql语句,args表示填入sql的选项值
@@ -124,32 +124,32 @@ class StringField(Field):
 
 # 整数域
 class IntegerField(Field):
-    
+
     def __init__(self, name=None, primary_key=False, default=0):
         super().__init__(name, "bigint", primary_key, default)
 
 # 布尔域
 class BooleanField(Field):
-    
+
     def __init__(self, name=None, default=False):
         super().__init__(name, "boolean", False, default)
 
 # 浮点数域
 class FloatField(Field):
-    
+
     def __init__(self, name=None, primary_key=False, default=0.0):
         super().__init__(name, "real", primary_key, default)
 
 # 文本域
 class TextField(Field):
-    
+
     def __init__(self, name=None, default=None):
         super().__init__(name, "text", False, default)
 
 # 这是一个元类,它定义了如何来构造一个类,任何定义了__metaclass__属性或指定了metaclass的都会通过元类定义的构造方法构造类
 # 任何继承自Model的类,都会自动通过ModelMetaclass扫描映射关系,并存储到自身的类属性
 class ModelMetaclass(type):
-    
+
     def __new__(cls, name, bases, attrs):
         # cls: 当前准备创建的类对象,相当于self
         # name: 类名,比如User继承自Model,当使用该元类创建User类时,name=User
@@ -161,7 +161,7 @@ class ModelMetaclass(type):
 
         # 以下是针对"Model"的子类的处理,将被用于子类的创建.metaclass将隐式地被继承
 
-        # 获取表名,若没有定义__table__属性,将类名作为表名.此处注意 or 的用法 
+        # 获取表名,若没有定义__table__属性,将类名作为表名.此处注意 or 的用法
         tableName = attrs.get("__table__", None) or name
         logging.info("found model: %s (table: %s)" % (name, tableName))
         # 获取所有的Field和主键名
@@ -171,7 +171,7 @@ class ModelMetaclass(type):
 
         # 遍历类的属性,找出定义的域(如StringField,字符串域)内的值,建立映射关系
         # k是属性名,v其实是定义域!请看name=StringField(ddl="varchar50")
-        for k, v in attrs.items():   
+        for k, v in attrs.items():
             if isinstance(v, Field):
                 logging.info(" found mapping: %s ==> %s" % (k, v))
                 mappings[k] = v   # 建立映射关系
@@ -180,14 +180,14 @@ class ModelMetaclass(type):
                         raise RuntimeError("Duplicate primary key for field: %s" % s)
                     primaryKey = k
                 else:
-                    fields.append(k) # 将非主键的属性都加入fields列表中 
+                    fields.append(k) # 将非主键的属性都加入fields列表中
         if not primaryKey: # 没有找到主键也将报错,因为每张表有且仅有一个主键
             raise RuntimeError("Primary key not found")
         # 从类属性中删除已加入映射字典的键,避免重名
         for k in mappings.keys():
             attrs.pop(k)
         # 将非主键的属性变形,放入escaped_fields中,方便增删改查语句的书写
-        escaped_fields = list(map(lambda f: "`%s`" % f, fields)) 
+        escaped_fields = list(map(lambda f: "`%s`" % f, fields))
         attrs["__mappings__"] = mappings # 保存属性和列的映射关系
         attrs["__table__"] = tableName   # 保存表名
         attrs["__primary_key__"] = primaryKey # 保存主键
@@ -206,7 +206,7 @@ class ModelMetaclass(type):
 
 # ORM映射基类,继承自dict,通过ModelMetaclass元类来构造类
 class Model(dict, metaclass=ModelMetaclass):
-    
+
     # 初始化函数,调用其父类(dict)的方法
     def __init__(self, **kw):
         super(Model, self).__init__(**kw)
@@ -300,7 +300,6 @@ class Model(dict, metaclass=ModelMetaclass):
         if len(rs) == 0:
             return None
         return rs[0]["_num_"]
-        
 
     @asyncio.coroutine
     def save(self):
@@ -315,12 +314,11 @@ class Model(dict, metaclass=ModelMetaclass):
     @asyncio.coroutine
     def update(self):
         # 像time.time,next_id之类的函数在插入的时候已经调用过了,没有其他需要实时更新的值,因此调用getValue
-        args = list(map(self.getValue, self.__fields__)) 
+        args = list(map(self.getValue, self.__fields__))
         args.append(self.getValue(self.__primary_key__))
         rows = yield from execute(self.__update__, args)
         if rows != 1:
             logging.warn("failed to update by primary key: affected rows %s" % rows)
-        
 
     @asyncio.coroutine
     def remove(self):

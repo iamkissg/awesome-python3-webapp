@@ -3,7 +3,7 @@
 
 'web application骨架'
 
-__author__ = 'Engine' 
+__author__ = 'Engine'
 
 import logging
 
@@ -124,8 +124,8 @@ def response_factory(app, handler):
             return resp
         # 若响应结果为字典,则获取它的模板属性,此处为jinja2.env(见init_jinja2)
         if isinstance(r, dict):
-            template = r.get("__template__") 
-            # 若不存在对应模板,则将字典调整为json格式返回,并设置响应类型为json 
+            template = r.get("__template__")
+            # 若不存在对应模板,则将字典调整为json格式返回,并设置响应类型为json
             if template is None:
                 resp = web.Response(body=json.dumps(r, ensure_ascii=False, default=lambda o: o.__dict__).encode("utf-8"))
                 resp.content_type = "application/json;charset=utf-8"

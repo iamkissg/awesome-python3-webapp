@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<!-- base html template -->
+<html>
+<head>
+    <meta charset="UTF-8" />
+    {% block meta %} <!-- block meta --> {% endblock %}
+    <title>{%block title%} ? {% endblock %} - Awesome Python3 Webapp</title>
+    <link rel="stylesheet" href="/static/css/uikit.min.css" />
+    <link rel="stylesheet" href="/static/css/uikit.gradient.min.css" />
+    <link rel="stylesheet" href="/static/css/awesome.css" />
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/sha1.min.js"></script>
+    <script src="/static/js/uikit.min.js"></script>
+    <script src="/static/js/sticky.min.js"></script>
+    <script src="/static/js/vue.min.js"></script>
+    <script src="/static/js/awesome.js"></script>
+    {% block beforehead %}<!-- beforehead -->{% endblock %}
+</head>
+
+<body>
+    <!-- navbar in top -->
+    <nav class="uk-navbar uk-navbar-attached uk-margin-bottom">
+        <div class="uk-container un-container-center">
+            <a href="/" class="uk-navbar-brand">Awesome</a>
+            <ul class="uk-navbar-nav">
+                <li data-url="blogs"><a href="/"><i class="uk-icon-home"></i>Blogs</a></li>
+                <li><a target="_blank" href="http://www.liaoxuefeng.com/wiki/0014316089557264a6b348958f449949df42a6d3a2e542c000"><i class="uk-icon-book"></i>Tutorials</a></li>
+                <li><a target="_blank" href="https://github.com/michaelliao/awesome-python3-webapp"><i class="uk-icon-code"></i>Code</a></li>
+            </ul>
+
+            <div class="uk-navbar-flip">
+                <ul class="uk-navbar-nav">
+                {% if __user__ %}
+                    <li class="uk--parent" data-uk-dropdown>
+                        <a href="#0"><i class="uk-icon-user"></i>{{ __user__.name }}</a>
+                        <div class="uk-dropdown uk-dropdown-navbar">
+                            <ul class="uk-nav nk-nav-navbar">
+                                <li><a href="/signout"><i class="uk-icon-sign-out"></i>Sign out</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                {% else %}
+                    <li><a href="/signin"><i class="uk-icon-sign-in"></i>Sign in</a></li>
+                    <li><a href="/register"><i class="uk-icon-sign-edit"></i>Register</a></li>
+                {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <!-- //navbar in top -->
+
+
+    <!-- content body -->
+    <div class="uk-container uk-container-center">
+        <div class="uk-grid">
+            <!-- content -->
+            {% block content %}
+            {% endblock %}
+
+        </div>
+    </div>
+    <!-- //content body -->
+
+    <!-- foot -->
+    <div class="uk-margin-large-top" style="background-color:#eee; border-top:1px solid #ccc;">
+        <div class="uk-container uk-container-center uk-text-center">
+            <div class="uk-panel uk-margin-top uk-margin-bottom">
+                <p>
+                    <a target="_blank" href="http://weibo.com/kissg07"i class="uk-icon-weibo"></a>
+                    <a target="_blank" href="https://github.com/engine-treasuer"i class="uk-icon-github"></a>
+                </p>
+                <p>Powered by<a href="http://awesome.liaoxuefeng.com">Awesome Python3 Webapp</a>.Copyright &copy; 2016. [<a href="/manage/" target="_blank">Manage</a>]</p>
+                <p><a href="http://www.liaoxuefeng.com/" target="_blank">www.liaoxuefeng.com</a>.All Rights reversed.</p>
+                <a target="_blank" href="http://www.w3.org/TR/html5"><i class="uk-icon-html5" stype="font-size:64px; color:#444;"></i></a>
+            </div>
+        </div>
+    </div>
+    <!-- //foot -->
+
+</body>
+</html>

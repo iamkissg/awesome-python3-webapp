@@ -72,6 +72,27 @@ def logger_factory(app, handler):
         return (yield from handler(request))
     return logger
 
+# 在处理请求之前,先将cookie解析出来,并将登录用于绑定到request对象上
+# 这样后续的url处理函数就可以直接拿到登录用户
+# 以后的每个请求,都是在这个middle之后处理的,都已经绑定了用户信息
+@asyncio.coroutine
+def auth_factory(app, handler):
+    @asyncio.coroutine
+    def auth(request):
+        logging.info("check user: %s %s" % (request.method, request.path))
+        request.__user__ = None # 先绑定一个None到请求的__user__属性
+        cookie_str = request.cookies.get(COOKIE_NAME) # 通过cookie名取得加密cookie字符串(不明白的看看handlers.py)
+        if cookie_str:
+            user = yield from cookie2user(cookie_str) # 验证cookie,并得到用户信息
+            if user:
+                logging_info("set current user: %s" % user.email)
+                request.__user__ = user # 将用户信息绑定到请求上
+            # 请求的路径是管理页面,但用户非管理员,将会重定向到登录页面?
+            if request.path.startswith('/manage/') and (request.__user__ is None or not request.__user__.admin):
+                return web.HTTPFound('/signin')
+            return (yield from handler(request))
+        return auth
+
 # 解析数据
 @asyncio.coroutine
 def data_factory(app, handler):
@@ -94,7 +115,7 @@ def data_factory(app, handler):
         return (yield from handler(request))
     return parse_data
 
-# 上面2个middle factory是在url处理函数之前先对请求进行了处理,以下则在url处理函数之后进行处理
+# 上面factory是在url处理函数之前先对请求进行了处理,以下则在url处理函数之后进行处理
 # 其将request handler的返回值转换为web.Response对象
 @asyncio.coroutine
 def response_factory(app, handler):
@@ -173,7 +194,7 @@ def datetime_filter(t):
 @asyncio.coroutine
 def init(loop):
     # 创建全局数据库连接池
-    yield from orm.create_pool(loop = loop, host="127.0.0.1", port = 3306, user = "www-data", password = "www-data", db = "awesome")
+    yield from orm.create_pool(loop = loop, host="127.0.0.1", port = 3306, user = "www-data", password = "www-data", db = "awesome", autocommit = True)
     # 创建web应用,
     app = web.Application(loop = loop, middlewares=[logger_factory, response_factory]) # 创建一个循环类型是消息循环的web应用对象
     # 设置模板为jiaja2, 并以时间为过滤器

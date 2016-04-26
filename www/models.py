@@ -3,7 +3,7 @@
 
 '定义各类的属性'
 
-__author__ = 'Engine' 
+__author__ = 'Engine'
 
 import time
 import uuid # the module provides immutable uuid objects, and the functions to generating different versions uuid.
@@ -29,7 +29,7 @@ class User(Model):
     name = StringField(ddl="varchar(50)")
     image = StringField(ddl="varchar(500)")
     # 此处default用于存储创建的时间,在insert的时候被调用
-    created_at = FloatField(default=time.time) 
+    created_at = FloatField(default=time.time)
 
 class Blog(Model):
 
@@ -48,7 +48,7 @@ class Comment(Model):
 
     __table__ = "comments"
 
-    id = StringField(primary_key=True, default=next_id, ddl="varchar(50)") 
+    id = StringField(primary_key=True, default=next_id, ddl="varchar(50)")
     blog_id = StringField(ddl="varchar(50)")
     user_id = StringField(ddl="varchar(50)")
     user_name = StringField(ddl="varchar(50)")

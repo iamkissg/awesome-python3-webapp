@@ -35,7 +35,7 @@ def create_pool(loop, **kw):
         password  = kw["password"],            # 口令
         db        = kw["db"],            # 当前数据库名
         charset   = kw.get("charset", "utf8"), # 设置连接使用的编码格式为utf-8
-        autocommit= kw.get("autocommit", True),# 自动提交模式,默认是False
+        autocommit= kw.get("autocommit", True),# 自动提交模式,此处默认是False
 
         #以下三项为可选项
         # 最大连接池大小,默认是10,此处设为10
@@ -73,7 +73,8 @@ def select(sql, args, size=None):
 def execute(sql, args):
     log(sql)
     with (yield from __pool) as conn: # 从连接池中取出一条数据库连接
-        if not autocommit: # 若数据库的事务为非自动提交的,则调用协程启动连接
+        # 若数据库的事务为非自动提交的,则调用协程启动连接
+        if not conn.get_autocommit(): # 根据aiomysql文档,修改autocommit为obj.get_autocommit()
             yield from conn.begin()
         try:
             # 此处打开的是一个普通游标
@@ -81,10 +82,10 @@ def execute(sql, args):
             yield from cur.execute(sql.replace("?", "%s"), args) # 执行增删改
             affected = cur.rowcount # 增删改影响的行数
             yield from cur.close() # 执行结束,关闭游标
-            if not autocommit: # 同上, 事务非自动提交型的,手动调用协程提交增删改事务
+            if not conn.get_autocommit(): # 同上, 事务非自动提交型的,手动调用协程提交增删改事务
                 yield from conn.commit()
         except BaseException as e:
-            if not autocommit: # 出错, 回滚事务到增删改之前
+            if not conn.get_autocommit(): # 出错, 回滚事务到增删改之前
                 yield from conn.rollback()
             raise
         return affected

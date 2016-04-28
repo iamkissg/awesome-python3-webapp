@@ -252,7 +252,7 @@ class Model(dict, metaclass=ModelMetaclass):
     def find(cls, pk):
         'find object by primary key'
         # 我们之前已将将数据库的select操作封装在了select函数中,以下select的参数依次就是sql, args, size
-        rs = yield from select("%s where `%s`=?" % (cls.__select__, cls.primary_key), [pk], 1)
+        rs = yield from select("%s where `%s`=?" % (cls.__select__, cls.__primary_key__), [pk], 1)
         if len(rs) == 0:
             return None
         # **表示关键字参数,我当时还疑惑怎么用到了指针?知识交叉了- -
@@ -282,7 +282,7 @@ class Model(dict, metaclass=ModelMetaclass):
             if isinstance(limit, int):
                 sql.append("?")
                 args.append(limit)
-            elif isinstance(limint, tuple) and len(limint) == 2:
+            elif isinstance(limit, tuple) and len(limit) == 2:
                 sql.append("?, ?")
                 args.extend(limit)
             else:

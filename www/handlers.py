@@ -263,8 +263,8 @@ def api_register_user(*,name, email, passwd): # 注册信息包括用户名,邮�
     # 因此服务器可以通过设置或读取Cookies中包含信息,借此维护用户跟服务器会话中的状态
     # user2cookie设置的是cookie的值
     # max_age是cookie的最大存活周期,单位是秒.当时间结束时,客户端将抛弃该cookie.之后需要重新登录
-    # r.set_cookie(COOKIE_NAME, user2cookie(user, 600), max_age=600, httponly=True)  # 设置cookie最大存会时间为10min
-    r.set_cookie(COOKIE_NAME, user2cookie(user, 86400), max_age=86400, httponly=True)  #86400s=24h
+    r.set_cookie(COOKIE_NAME, user2cookie(user, 600), max_age=600, httponly=True)  # 设置cookie最大存会时间为10min
+    # r.set_cookie(COOKIE_NAME, user2cookie(user, 86400), max_age=86400, httponly=True)  #86400s=24h
     user.passwd = '*****' # 修改密码的外部显示为*
     # 设置content_type,将在data_factory中间件中继续处理
     r.content_type = 'application/json'
@@ -297,7 +297,8 @@ def authenticate(*, email, passwd): # 通过邮箱与密码验证登录
         raise APIValueError("passwd", "Invalid password")
     # 用户登录之后,同样的设置一个cookie,与注册用户部分的代码完全一样
     r = web.Response()
-    r.set_cookie(COOKIE_NAME, user2cookie(user, 86400), max_age=86400, httponly=True)
+    r.set_cookie(COOKIE_NAME, user2cookie(user, 600), max_age=600, httponly=True)
+    # r.set_cookie(COOKIE_NAME, user2cookie(user, 86400), max_age=86400, httponly=True)
     # r.set_cookie(COOKIE_NAME, user2cookie(user, 600), max_age=600, httponly=True)
     user.passwd = "*****"
     r.content_type = "application/json"

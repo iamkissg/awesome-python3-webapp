@@ -30,11 +30,15 @@ class MyFileSystemEventHandler(FileSystemEventHandler):
     # 覆盖on_any_event方法
     # on_any_event(event)捕获所有事件, 文件或目录的创建, 删除, 修改等
     def on_any_event(self, event):
-        # src_path表示事件发生的源路径(包括文件名)
+        # 注释的是廖老师的事件,
         # 此处只处理python脚本的事件
         if event.src_path.endswith(".py"):
             log("Python source file changed: %s" % event.src_path)
             self.restart()
+
+        # 处理一切文件的创建,修改,删除
+        # log("Source file changed: %s" % event.src_path)
+        # self.restart()
 
 command = ["echo", "ok"]
 process = None

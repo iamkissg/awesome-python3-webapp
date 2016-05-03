@@ -153,6 +153,7 @@ def response_factory(app, handler):
                 return resp
             # 存在对应模板的,则将套用模板,用request handler的结果进行渲染
             else:
+                r["__user__"] = request.__user__  # 增加__user__,前端页面将依次来决定是否显示评论框
                 resp = web.Response(body=app["__templating__"].get_template(template).render(**r).encode("utf-8"))
                 resp.content_type = "text/html;charset=utf-8"
                 return resp
@@ -190,7 +191,7 @@ def datetime_filter(t):
     dt = datetime.fromtimestamp(t)
     return u"%s年%s月%s日" % (dt.year, dt.month, dt.day)
 
-# 初始化协程
+# 初始化
 @asyncio.coroutine
 def init(loop):
     # 创建全局数据库连接池

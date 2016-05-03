@@ -3,7 +3,7 @@
 
 'Web 框架'
 
-__author__ = 'Engine' 
+__author__ = 'Engine'
 
 import functools # 高阶函数模块, 提供常用的高阶函数, 如wraps
 import asyncio
@@ -144,7 +144,7 @@ class RequestHandler(object):
                         return web.HTTPBadRequest("JSON body must be object.")
                     kw = params # post, content type字段指定的消息主体是json字符串,且解码得到参数为字典类型的,将其赋给变量kw
                 # 以下2种content type都表示消息主体是表单
-                elif ct.startswith("application/x-www-form-urlencoded") or ct.startswith("multipart/form-data"): 
+                elif ct.startswith("application/x-www-form-urlencoded") or ct.startswith("multipart/form-data"):
                     # request.post方法从request body读取POST参数,即表单信息,并包装成字典赋给kw变量
                     params = yield from request.post()
                     kw = dict(**params)
@@ -156,7 +156,7 @@ class RequestHandler(object):
             if request.method == "GET":
                 # request.query_string表示url中的查询字符串
                 # 比如"https://www.google.com/#newwindow=1&q=google",其中q=google就是query_string
-                qs = request.query_string 
+                qs = request.query_string
                 if qs:
                     kw = dict() # 原来为None的kw变成字典
                     for k, v in parse.parse_qs(qs, True).items(): # 解析query_string,以字典的形如储存到kw变量中
@@ -184,17 +184,18 @@ class RequestHandler(object):
         if self._required_kw_args:
             for name in self._required_kw_args:
                 if not name in kw:
-                    return web.HTTPBadRequest("Missing argument: %s" % name)
+                    return web.HTTPBadRequest()
+                    # return web.HTTPBadRequest("Missing argument: %s" % name)
         logging.info("call with args: %s" % str(kw))
         # 以上过程即为从request中获得必要的参数
-        
+
         # 以下调用handler处理,并返回response.
         try:
             r = yield from self._func(**kw)
             return r
         except APIError as e:
             return dict(error = e.error, data = e.data, message = e.message)
-    
+
 def add_static(app):
     # os.path.abspath(__file__), 返回当前脚本的绝对路径(包括文件名)
     # os.path.dirname(), 去掉文件名,返回目录路径
@@ -209,7 +210,7 @@ def add_static(app):
 def add_route(app, fn):
     method = getattr(fn, "__method__", None) # 获取fn.__method__属性,若不存在将返回None
     path = getattr(fn, "__route__", None) # 同上
-    # http method 或 path 路径未知,将无法进行处理,因此报错 
+    # http method 或 path 路径未知,将无法进行处理,因此报错
     if path is None or method is None:
         raise ValueError("@get or @post not defined in %s." % str(fn))
     # 将非协程或生成器的函数变为一个协程.
@@ -231,7 +232,7 @@ def add_routes(app, module_name):
         # level -- 绝对导入还是相对导入,默认值为0, 即使用绝对导入,正数值表示相对导入时,导入目录的父目录的层数
         mod = __import__(module_name, globals(), locals())
     else:
-        name = module_name[n+1:] # 
+        name = module_name[n+1:] #
         # 以下语句表示, 先用__import__表达式导入模块以及子模块
         # 再通过getattr()方法取得子模块名, 如datetime.datetime
         mod = getattr(__import__(module_name[:n], globals(), locals(), [name]), name)

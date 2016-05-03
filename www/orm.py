@@ -200,7 +200,7 @@ class ModelMetaclass(type):
         # 插入数据时,要指定属性名,并对应的填入属性值(数据库的知识都要忘光了,我这句怎么难看懂- -,惭愧惭愧)
         attrs["__insert__"] = "insert into `%s` (%s, `%s`) values (%s)" % (tableName, ', '.join(escaped_fields), primaryKey, create_args_string(len(escaped_fields) + 1 ))
         # 通过主键查找到记录并更新
-        attrs["__update__"] = "update `%s` set %s where `%s`=?" % (tableName, ', '.join(map(lambda f: "`%s`" % (mappings.get(f).name or f), fields)), primaryKey)
+        attrs["__update__"] = "update `%s` set %s where `%s`=?" % (tableName, ', '.join(map(lambda f: "`%s`=?" % (mappings.get(f).name or f), fields)), primaryKey)
         # 通过主键删除
         attrs["__delete__"] = "delete from `%s` where `%s`=?" % (tableName, primaryKey)
         return type.__new__(cls, name, bases, attrs)
@@ -327,5 +327,3 @@ class Model(dict, metaclass=ModelMetaclass):
         rows = yield from execute(self.__delete__, args) # 调用默认的delete语句
         if rows != 1:
             logging.warn("failed to remove by primary key: affected rows %s" % rows)
-
-

@@ -8,7 +8,9 @@ __author__ = 'Engine'
 import logging
 
 # 设置日志等级,默认为WARNING.只有指定级别或更高级的才会被追踪记录
-logging.basicConfig(level=logging.INFO) # 输出到logfile文件
+logging.basicConfig(level=logging.INFO,
+                    format="%(asctime)s %(message)s",  # display date
+                    datefmt="[%Y-%m-%d %H:%M:%S]")
 
 import asyncio
 import os
@@ -159,7 +161,7 @@ def response_factory(app, handler):
                 return resp
         # 若响应结果为整型的
         # 此时r为状态码,即404,500等
-        if isinstance(r, int) and r >=100 and r<600:
+        if isinstance(r, int) and r >= 100 and r<600:
             return web.Response
         # 若响应结果为元组,并且长度为2
         if isinstance(r, tuple) and len(r) == 2:

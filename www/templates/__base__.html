@@ -24,12 +24,13 @@
             <a href="/" class="uk-navbar-brand">Awesome</a>
             <ul class="uk-navbar-nav">
                 <li data-url="blogs"><a href="/"><i class="uk-icon-home"></i>Blogs</a></li>
-                <li><a target="_blank" href="http://www.liaoxuefeng.com/wiki/0014316089557264a6b348958f449949df42a6d3a2e542c000"><i class="uk-icon-book"></i>Tutorials</a></li>
-                <li><a target="_blank" href="https://github.com/michaelliao/awesome-python3-webapp"><i class="uk-icon-code"></i>Code</a></li>
+                <!-- <li><a target="_blank" href="http://www.liaoxuefeng.com/wiki/0014316089557264a6b348958f449949df42a6d3a2e542c000"><i class="uk-icon-book"></i>Tutorials</a></li> -->
+                <li><a target="_blank" href="https://github.com/Engine-Treasure/awesome-python3-webapp"><i class="uk-icon-code"></i>Code</a></li>
             </ul>
 
             <div class="uk-navbar-flip">
                 <ul class="uk-navbar-nav">
+                <!-- 若已登录将显示用户信息-->
                 {% if __user__ %}
                     <li class="uk--parent" data-uk-dropdown>
                         <a href="#0"><i class="uk-icon-user"></i>{{ __user__.name }}</a>
@@ -66,11 +67,11 @@
         <div class="uk-container uk-container-center uk-text-center">
             <div class="uk-panel uk-margin-top uk-margin-bottom">
                 <p>
-                    <a target="_blank" href="http://weibo.com/kissg07"i class="uk-icon-weibo"></a>
-                    <a target="_blank" href="https://github.com/engine-treasuer"i class="uk-icon-github"></a>
+                <a target="_blank" href="http://weibo.com/kissg07"><i class="uk-icon-weibo"></i></a>
+                <a target="_blank" href="https://github.com/engine-treasure"><i class="uk-icon-github"></i></a>
                 </p>
-                <p>Powered by<a href="http://awesome.liaoxuefeng.com">Awesome Python3 Webapp</a>.Copyright &copy; 2016. [<a href="/manage/" target="_blank">Manage</a>]</p>
-                <p><a href="http://www.liaoxuefeng.com/" target="_blank">www.liaoxuefeng.com</a>.All Rights reversed.</p>
+                <p>Powered by<a href="http://googlegeeks.xyz:23333">Awesome Python3 Webapp</a>.Copyright &copy; 2016. [<a href="/manage/" target="_blank">Manage</a>]</p>
+                <p>kissg All Rights reversed.</p>
                 <a target="_blank" href="http://www.w3.org/TR/html5"><i class="uk-icon-html5" stype="font-size:64px; color:#444;"></i></a>
             </div>
         </div>

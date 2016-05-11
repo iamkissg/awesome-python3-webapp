@@ -3,4 +3,4 @@ www/__pycache__/
 www/*test.py
 www/*@*
 dist/*.tar.gz
-
+*.pyc

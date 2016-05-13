@@ -16,10 +16,10 @@
 
 Awesome Python3 WebApp 这个博客系统, 我已经部署到服务器上了.
 
-|:--:|:--:|
-|地址|[googlegeeks.xyz:23333](http://googlegeeks.xyz:23333)|
-|管理员帐号|kissg@kissg.com|
-|密码|kissgkissg|
+
+地址       [googlegeeks.xyz:23333](http://googlegeeks.xyz:23333)
+管理员帐号 kissg@kissg.com
+密码       kissgkissg
 
 ---
 
@@ -29,7 +29,7 @@ Awesome Python3 WebApp 这个博客系统, 我已经部署到服务器上了.
 
 [廖老师第15天的实战](http://www.liaoxuefeng.com/wiki/0014316089557264a6b348958f449949df42a6d3a2e542c000/0014323392805925d5b69ddad514511bf0391fe2a0df2b0000)已经给出了一个系统的全局模型:
 
-![Nginx-awesome-MySQL](/img/awesome-python3-webapp/nginx-awesome-mysql.png)
+![Nginx-awesome-MySQL](nginx-awesome-mysql.png)
 
 - `Nginx`作为Web服务器, 用于处理静态资源, 同时作为反向代理将动态请求交给python代码处理;
 - `awesome`, 即我们用python3写的webapp, 负责事务处理, 并与数据库交互;
